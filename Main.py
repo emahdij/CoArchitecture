@@ -10,7 +10,7 @@ miniature.file_translate()
 print("----------------------")
 print(miniature.separated)
 print(miniature.machinecode)
-print(miniature.lable)
+print(miniature.SymbolTable)
 # miniature.print_bin_file()
 miniature.print_decimalcode()
 

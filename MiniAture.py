@@ -20,7 +20,7 @@ class Miniature:
         "halt": "1110"
     }
 
-    lable = {
+    SymbolTable = {
     }
 
     def __init__(self, url):
@@ -35,11 +35,16 @@ class Miniature:
         self.file.close()
         self.separated = self.dell_duplicated()
         for i in range(self.separated.__len__()):
-            if str(self.separated[i][0]).split(" ") != "":
-                newlable = {
-                    str(self.separated[i][0]).replace("\t", "").replace(":", ""): str(i)
-                }
-                self.lable.update(newlable)
+            self.separated[i][0] = str(self.separated[i][0]).replace("\t", "")
+            self.separated[i][0] = str(self.separated[i][0]).replace(" ", "")
+            if str(self.separated[i][0]) != '':
+                if (str(self.separated[i][0]) in self.SymbolTable):
+                    raise Exception("Ops:| " + self.separated[i][0] + " is existed")
+                else:
+                    newlable = {
+                        str(self.separated[i][0]).replace("\t", "").replace(" ", ""): str(i)
+                    }
+                self.SymbolTable.update(newlable)
         print("scanned")
 
     def dell_duplicated(self):
@@ -101,14 +106,12 @@ class Miniature:
             return "0" * (4 - len(st)) + st
         elif type == 2:
             if re.match("[a-zA-Z]", str(self.separated[i][j])):
-                if (self.separated[i][j] in self.lable):
-                    st = bin(int(self.lable.get(self.separated[i][j])))[2:]
+                if (self.separated[i][j] in self.SymbolTable):
+                    st = bin(int(self.SymbolTable.get(self.separated[i][j])))[2:]
                 else:
                     raise Exception("Ops:| " + self.separated[i][j] + " not found")
             else:
                 st = bin(int(self.separated[i][j]))[2:]
-                print(st)
-                print("0" * (16 - len(st)) + st)
             return "0" * (16 - len(st)) + st
 
     def print_decimalcode(self):
