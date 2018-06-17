@@ -1,17 +1,16 @@
 from MiniAture import Miniature
-
-
-miniature=Miniature("E:\\assemble.txt")
+#assemble E:\\assemble.as E:\\program.mc
+arg = ""
+while arg.split(" ")[0] != "assemble":
+    arg = input()
+miniature = Miniature(arg)
 miniature.scan()
-print("_-_-_-_-_-_-_-_-_-_-")
-print("")
-miniature.print_file()
+print("-----------------------------")
 miniature.file_translate()
-print("----------------------")
-print(miniature.separated)
-print(miniature.machinecode)
-print(miniature.SymbolTable)
-# miniature.print_bin_file()
+print("file translated")
+print("-----------------------------")
+miniature.print_bin_file()
+print("-----------------------------")
 miniature.print_decimalcode()
-
-
+print("-----------------------------")
+miniature.savefile()

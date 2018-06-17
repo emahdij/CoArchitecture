@@ -23,17 +23,19 @@ class Miniature:
     SymbolTable = {
     }
 
-    def __init__(self, url):
+    def __init__(self, url="assemble E:\\assemble.as E:\\program.mc"):
         self.machinecode = []
-        self.file = open(url, "r")
+        self.file = open(str(url).split(" ")[1], "r")
+        self.addresultfile = str(url).split(" ")[2]
 
     def scan(self):
         regex = (
-            "(.*?)[ ]*(add|sub|slt|or|nand|and)[ ]([0-9]*),([0-9]*),([0-9]*)|(.*?)[ ]*(addi|ori|slti|lw|sw|beq|jalr)[ ]([0-9]*),([0-9]*),([0-9]+|[a-z]+)|(.*?)[ ]*(lui)[ ]([0-9]*),([0-9]*)|(.*?)[ ]*(j)[ ]([0-9]*)|(.*?)[ ]*(halt)")
+            "(.*?)[\t| ]*(add|sub|slt|or|n and|and)[\t| ]*([0-9]*),([0-9]*),([0-9]*)|(.*?)[\t| ]*(addi|ori|slti|lw|sw|beq|jalr)[\t| ]*([0-9]*),([0-9]*),([0-9]+|[a-z]+)|(.*?)[\t| ]*(lui)[\t| ]*([0-9]*),([0-9]*)|(.*?)[\t| ]*(j)[\t| ]*([0-9]*)|(.*?)[\t| ]*(halt)|(.*?)[\t| ]*(.fill)[\t| ]*([0-9]+|[a-z]+)|(.*?)[\t| ]*(.space)[\t| ]*([0-9]*)")
         self.readfile = self.file.read()
         self.separated = re.findall(regex, self.readfile)
-        self.file.close()
+        length = len(self.file.readline())
         self.separated = self.dell_duplicated()
+        self.file.close()
         for i in range(self.separated.__len__()):
             self.separated[i][0] = str(self.separated[i][0]).replace("\t", "")
             self.separated[i][0] = str(self.separated[i][0]).replace(" ", "")
@@ -79,6 +81,8 @@ class Miniature:
                         i, 2) + "0" * 12)
             elif self.Jtest(i):
                 if (self.separated[i][1] == "j"):
+                    if int(self.separated[i][2]) > 65535:
+                        raise Exception("Ops:| " + self.separated[i][2] + " is too big")
                     self.machinecode.append(
                         "0000" + self.opcode.get(self.separated[i][1]) + "00000000" + self.bin_complete(i, 2, 2))
                 elif self.separated[i][1] == "halt":
@@ -88,16 +92,34 @@ class Miniature:
 
             elif self.Itest(i):
                 if (self.separated[i][1] != "lui"):
+                    if int(self.separated[i][4]) > 65535:
+                        raise Exception("Ops:| " + self.separated[i][4] + " is too big")
                     self.machinecode.append(
                         "0000" + self.opcode.get(self.separated[i][1]) + self.bin_complete(i, 3) + self.bin_complete(i,
                                                                                                                      2)
                         + self.bin_complete(i, 4, 2)
                     )
                 else:
+                    if int(self.separated[i][4]) > 65535:
+                        raise Exception("Ops:| " + self.separated[i][4] + " is too big")
                     self.machinecode.append(
                         "0000" + self.opcode.get(self.separated[i][1]) + "0000" + self.bin_complete(i,
                                                                                                     2) + self.bin_complete(
                             i, 3, 2)
+                    )
+            elif self.directive(i):
+                if (self.separated[i][1] == ".fill"):
+                    if re.match("[a-zA-Z]", str(self.separated[i][2])):
+                        if (self.separated[i][2] in self.SymbolTable):
+                            self.machinecode.append(bin(int(self.SymbolTable.get(self.separated[i][2])))[2:])
+                        else:
+                            raise Exception("Ops:| " + self.separated[i][2] + " not found")
+                    else:
+                        self.machinecode.append(bin(int(self.separated[i][2]))[2:])
+
+                elif (self.separated[i][1] == ".space"):
+                    self.machinecode.append(
+                        bin(int(self.separated[i][2]))[2:]
                     )
 
     def bin_complete(self, i, j, type=1):
@@ -118,8 +140,16 @@ class Miniature:
         for i in range(self.machinecode.__len__()):
             print(int(self.machinecode[i], 2))
 
+    def savefile(self):
+        writefile = open(self.addresultfile, "w")
+        for i in range(self.machinecode.__len__()):
+            writefile.writelines(str(int(self.machinecode[i], 2))+"\n")
+        writefile.close()
+
     Rtest = lambda self, i: True if "add sub slt or nand".find(self.separated[i][1]) != -1 else False
 
     Itest = lambda self, i: True if "addi ori slti lui lw sw beq jalr".find(self.separated[i][1]) != -1 else False
 
     Jtest = lambda self, i: True if "j halt".find(self.separated[i][1]) != -1 else False
+
+    directive = lambda self, i: True if ".fill .space".find(self.separated[i][1]) != -1 else False
